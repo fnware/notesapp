@@ -166,7 +166,7 @@ export default function HomeScreen() {
             source={require('../assets/images/mynotes_icon.png')} 
             style={styles.headerIcon}
           />
-          <Text style={styles.headerTitle}>Notizzettel</Text>
+          <Text style={styles.headerTitle}>Notizzettel v2</Text>
           <View style={styles.headerButtons}>
             <TouchableOpacity style={styles.headerButton} onPress={handleAddNote}>
               <Ionicons name="add" size={28} color="#007AFF" />
