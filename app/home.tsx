@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -8,12 +8,14 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  Dimensions
+  Dimensions,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Note, getNotes, signOut, deleteNote } from './lib/supabase';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import * as Haptics from 'expo-haptics';
 
 interface NoteCardProps {
   title: string;
@@ -24,11 +26,17 @@ interface NoteCardProps {
 const { width } = Dimensions.get('window');
 
 const NoteCard: React.FC<NoteCardProps> = ({ title, content, onDelete }) => {
+  const swipeableRef = useRef<Swipeable>(null);
+
   const renderRightActions = () => {
     return (
       <TouchableOpacity 
         style={styles.deleteButton}
-        onPress={onDelete}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          onDelete();
+          swipeableRef.current?.close();
+        }}
       >
         <Ionicons name="trash-outline" size={24} color="#FFFFFF" />
       </TouchableOpacity>
@@ -37,8 +45,12 @@ const NoteCard: React.FC<NoteCardProps> = ({ title, content, onDelete }) => {
 
   return (
     <Swipeable
+      ref={swipeableRef}
       renderRightActions={renderRightActions}
       rightThreshold={width * 0.3}
+      onSwipeableOpen={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }}
     >
       <View style={styles.noteCard}>
         <Text style={styles.noteTitle}>{title}</Text>
@@ -85,10 +97,12 @@ export default function HomeScreen() {
   );
 
   const handleAddNote = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push("/note");
   };
 
   const handleNotePress = (id: string) => {
+    Haptics.selectionAsync();
     router.push({
       pathname: "/note",
       params: { id }
@@ -97,6 +111,7 @@ export default function HomeScreen() {
 
   const handleSignOut = async () => {
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       await signOut();
       router.replace("/auth");
     } catch (error: any) {
@@ -111,7 +126,8 @@ export default function HomeScreen() {
       [
         {
           text: 'Cancel',
-          style: 'cancel'
+          style: 'cancel',
+          onPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         },
         {
           text: 'Delete',
@@ -119,10 +135,12 @@ export default function HomeScreen() {
           onPress: async () => {
             try {
               await deleteNote(noteId);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               setNotes(currentNotes => 
                 currentNotes.filter(note => note.id !== noteId)
               );
             } catch (error) {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
               Alert.alert('Error', 'Failed to delete note');
               console.error(error);
             }
@@ -144,7 +162,11 @@ export default function HomeScreen() {
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Notes</Text>
+          <Image 
+            source={require('../assets/images/mynotes_icon.png')} 
+            style={styles.headerIcon}
+          />
+          <Text style={styles.headerTitle}>Notizzettel</Text>
           <View style={styles.headerButtons}>
             <TouchableOpacity style={styles.headerButton} onPress={handleAddNote}>
               <Ionicons name="add" size={28} color="#007AFF" />
@@ -205,6 +227,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
   },
+  headerIcon: {
+    width: 36,
+    height: 36,
+    marginHorizontal: 8,
+    resizeMode: 'contain'
+  },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -246,9 +274,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
-    height: '100%',
-    marginBottom: 12,
     borderTopRightRadius: 12,
     borderBottomRightRadius: 12,
+    marginBottom: 12,
+    height: 'auto',
   },
 }); 
