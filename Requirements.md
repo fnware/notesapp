@@ -14,7 +14,7 @@ Key differentiators:
 # 2. Functional requirements
 ## 2.1 Authentication (Supabase)
 * User Signup: email/password validation with Supabase Auth
-* User Loing: Session management with JWT tokens
+* User Logging: Session management with JWT tokens
 * Logout: Clear session and anvigation to auth screen
 * Error handling: Display auth error (invalid email, weak password, etc.)
 ## 2.2 Note management
